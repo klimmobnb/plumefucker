@@ -67,10 +67,10 @@ Plumefucker - это скрипт, созданный с любовью, что�
 
 Пример:
 
-| Private Key                        | Proxy Address                      |
-|------------------------------------|------------------------------------|
-| 0xYourPrivateKey1                  | username:password@proxyserver:port |
-| 0xYourPrivateKey2                  | username:password@proxyserver:port |
+| Private Key                        | Proxy Address                    |
+|------------------------------------|----------------------------------|
+| YourPrivateKey1                  | username:password@proxyserver:port |
+| YourPrivateKey2                  | username:password@proxyserver:port |
 
 
 Запустите скрипт и следуйте инструкциям меню для выбора модуля, который вы хотите выполнить.
