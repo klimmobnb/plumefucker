@@ -1,3 +1,4 @@
+from secrets import token_hex
 from web3 import Web3
 from decimal import Decimal, ROUND_DOWN
 
@@ -69,20 +70,28 @@ def get_token_balance(web3, token_address, wallet_address):
 def approve_token(private_key, token_address, spender_address, amount):
     web3 = Web3(Web3.HTTPProvider('https://testnet-rpc.plumenetwork.xyz/http'))
     account = web3.eth.account.from_key(private_key)
-    token_contract = web3.eth.contract(address=token_address, abi=ERC20_ABI)
-
-    tx = token_contract.functions.approve(spender_address, amount).build_transaction({
-        'from': account.address,
-        'nonce': web3.eth.get_transaction_count(account.address),
-        'gas': 100000,
-        'gasPrice': web3.to_wei('1', 'gwei')
+    
+    contract = web3.eth.contract(address=token_address, abi=ERC20_ABI)
+    
+    # Одобрение контракта на использование токенов
+    nonce = web3.eth.get_transaction_count(account.address)
+    approval_tx = contract.functions.approve(spender_address, amount).build_transaction({
+        'chainId': 161221135,
+        'gas': 500000,  # Увеличиваем лимит газа
+        'gasPrice': web3.to_wei('5', 'gwei'),
+        'nonce': nonce
     })
+    signed_approval_tx = web3.eth.account.sign_transaction(approval_tx, private_key)
+    approval_tx_hash = web3.eth.send_raw_transaction(signed_approval_tx.raw_transaction)
+    approval_receipt = web3.eth.wait_for_transaction_receipt(approval_tx_hash)
+    
+    return approval_receipt
 
-    signed_tx = web3.eth.account.sign_transaction(tx, private_key)
-    tx_hash = web3.eth.send_raw_transaction(signed_tx.rawTransaction)
-
-    receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
-    return receipt
+def round_balance(balance):
+    # Превращаем баланс в строку и заменяем последние 17 цифр на нули
+    balance_str = str(balance)
+    rounded_balance_str = balance_str[:len(balance_str)-17] + '0' * 17
+    return int(rounded_balance_str)
 
 def stake_tokens(private_key, token_address):
     web3 = Web3(Web3.HTTPProvider('https://testnet-rpc.plumenetwork.xyz/http'))
@@ -95,9 +104,16 @@ def stake_tokens(private_key, token_address):
     # Получаем баланс токена
     balance = get_token_balance(web3, token_address, wallet_address)
     
-    # Округляем баланс до ближайшего целого числа токенов
-    rounded_balance = int(balance // 10**18) * 10**18
+    # Выводим текущий баланс токена
+    print(f"Current token balance: {balance}")
     
+    # Округляем баланс до ближайшего целого числа токенов
+    rounded_balance = round_balance(balance)
+    
+    if rounded_balance <= 0:
+        print("Insufficient balance to stake. Balance must be greater than 0.")
+        return
+
     # Одобряем контракт для использования токенов
     approval_receipt = approve_token(private_key, token_address, PROXY_CONTRACT_ADDRESS, rounded_balance)
     if approval_receipt['status'] != 1:
@@ -108,8 +124,8 @@ def stake_tokens(private_key, token_address):
     stake_data = implementation_contract.encodeABI(fn_name="stake", args=[rounded_balance])
     
     # Установка лимита газа и цены газа
-    gas_limit = 500000
-    gas_price = web3.to_wei('5', 'gwei')
+    gas_limit = 700000
+    gas_price = web3.to_wei('1', 'gwei')
 
     tx = {
         'to': PROXY_CONTRACT_ADDRESS,
@@ -121,7 +137,7 @@ def stake_tokens(private_key, token_address):
     }
     
     signed_tx = web3.eth.account.sign_transaction(tx, private_key)
-    tx_hash = web3.eth.send_raw_transaction(signed_tx.rawTransaction)
+    tx_hash = web3.eth.send_raw_transaction(signed_tx.raw_transaction)
     
     receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
     
