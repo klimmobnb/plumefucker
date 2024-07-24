@@ -107,6 +107,8 @@ def swap_tokens(private_key):
         print(f"Approval failed. Transaction hash: {approve_receipt['transactionHash'].hex()}")
         return approve_receipt
     
+    time.sleep(20) 
+    
     nonce = web3.eth.get_transaction_count(account.address)
     tx = swap_contract.functions.swap(BASE, QUOTE, POOL_IDX, IS_BUY, IN_BASE_QTY, QTY, TIP, LIMIT_PRICE, MIN_OUT, RESERVE_FLAGS).build_transaction({
         'from': account.address,
