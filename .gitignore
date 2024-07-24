@@ -10453,3 +10453,4 @@ venv/Scripts/pywin32_testall.py
 venv/Scripts/__pycache__/pywin32_postinstall.cpython-310.pyc
 venv/Scripts/__pycache__/pywin32_testall.cpython-310.pyc
 ~$accounts_data.xlsx
+accounts_data.xlsx
