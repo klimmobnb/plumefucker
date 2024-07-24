@@ -104,7 +104,7 @@ def stake_tokens(private_key, token_address):
         return None
     
     # Округляем баланс до ближайшего целого числа токенов
-    rounded_balance = int(str(balance)[:3] + '0' * 17)
+    rounded_balance = int(balance / 10**18) * 10**18
     
     # Одобряем контракт для использования токенов
     approval_receipt = approve_token(private_key, token_address, PROXY_CONTRACT_ADDRESS, rounded_balance)
