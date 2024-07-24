@@ -1,8 +1,32 @@
 from web3 import Web3
 import time
 
-#  информация о контракте свапа и параметрах
+# Информация о контракте свапа и параметрах
 SWAP_CONTRACT_ADDRESS = '0x4c722A53Cf9EB5373c655E1dD2dA95AcC10152D1'
+PROXY_CONTRACT_ADDRESS = '0x032139f44650481f4d6000c078820B8E734bF253'
+PROXY_ABI = [
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "implementation",
+                "type": "address"
+            },
+            {
+                "internalType": "bytes",
+                "name": "_data",
+                "type": "bytes"
+            }
+        ],
+        "stateMutability": "payable",
+        "type": "constructor"
+    },
+    {
+        "stateMutability": "payable",
+        "type": "fallback"
+    }
+]
+
 SWAP_ABI = [
     {
         "inputs": [
@@ -27,6 +51,26 @@ SWAP_ABI = [
     }
 ]
 
+ERC20_ABI = [
+    {
+        "constant": True,
+        "inputs": [{"name": "_owner", "type": "address"}],
+        "name": "balanceOf",
+        "outputs": [{"name": "balance", "type": "uint256"}],
+        "type": "function"
+    },
+    {
+        "constant": False,
+        "inputs": [
+            {"name": "_spender", "type": "address"},
+            {"name": "_value", "type": "uint256"}
+        ],
+        "name": "approve",
+        "outputs": [{"name": "success", "type": "bool"}],
+        "type": "function"
+    }
+]
+
 BASE = Web3.to_checksum_address('0x5c1409a46cd113b3a667db6df0a8d7be37ed3bb3')
 QUOTE = Web3.to_checksum_address('0xba22114ec75f0d55c34a5e5a3cf384484ad9e733')
 POOL_IDX = 36000
@@ -40,24 +84,44 @@ RESERVE_FLAGS = 0
 
 def swap_tokens(private_key):
     web3 = Web3(Web3.HTTPProvider('https://testnet-rpc.plumenetwork.xyz/http'))
-
-    swap_contract = web3.eth.contract(address=SWAP_CONTRACT_ADDRESS, abi=SWAP_ABI)
     account = web3.eth.account.from_key(private_key)
     
-    # Установка лимита газа и цены газа
-    gas_limit = 500000
-    gas_price = web3.to_wei('1', 'gwei')  # Цена газа с запасом
+    proxy_contract = web3.eth.contract(address=PROXY_CONTRACT_ADDRESS, abi=PROXY_ABI)
+    swap_contract = web3.eth.contract(address=SWAP_CONTRACT_ADDRESS, abi=SWAP_ABI)
 
+    def approve_tokens(private_key, token_address, spender_address, amount):
+        token_contract = web3.eth.contract(address=token_address, abi=ERC20_ABI)
+        nonce = web3.eth.get_transaction_count(account.address)
+        approve_tx = token_contract.functions.approve(spender_address, amount).build_transaction({
+            'chainId': 161221135,
+            'gas': 500000,
+            'gasPrice': web3.to_wei('5', 'gwei'),
+            'nonce': nonce
+        })
+        signed_approve_tx = web3.eth.account.sign_transaction(approve_tx, private_key)
+        approve_tx_hash = web3.eth.send_raw_transaction(signed_approve_tx.raw_transaction)
+        return web3.eth.wait_for_transaction_receipt(approve_tx_hash)
+
+    approve_receipt = approve_tokens(private_key, BASE, SWAP_CONTRACT_ADDRESS, QTY)
+    if approve_receipt['status'] != 1:
+        print(f"Approval failed. Transaction hash: {approve_receipt['transactionHash'].hex()}")
+        return approve_receipt
+    
+    nonce = web3.eth.get_transaction_count(account.address)
     tx = swap_contract.functions.swap(BASE, QUOTE, POOL_IDX, IS_BUY, IN_BASE_QTY, QTY, TIP, LIMIT_PRICE, MIN_OUT, RESERVE_FLAGS).build_transaction({
         'from': account.address,
-        'nonce': web3.eth.get_transaction_count(account.address),
-        'gas': gas_limit,
-        'gasPrice': gas_price
+        'nonce': nonce,
+        'gas': 500000,
+        'gasPrice': web3.to_wei('5', 'gwei')
     })
-    
     signed_tx = web3.eth.account.sign_transaction(tx, private_key)
     tx_hash = web3.eth.send_raw_transaction(signed_tx.raw_transaction)
-    
     receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
     
     return receipt
+
+# Пример вызова функции
+if __name__ == "__main__":
+    private_key = 'ваш_приватный_ключ'
+    receipt = swap_tokens(private_key)
+    print(receipt)
