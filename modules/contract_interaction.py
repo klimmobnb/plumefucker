@@ -1,9 +1,11 @@
 from web3 import Web3
+import config
 from web3.middleware import geth_poa_middleware
 
 def interact_with_proxy_contract(private_key, salt, signature, token="ETH"):
-    web3 = Web3(Web3.HTTPProvider('https://testnet-rpc.plumenetwork.xyz/http'))
-    web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+    web3 = config.web3
+    if not web3.middleware_onion.get(geth_poa_middleware):
+        web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     implementation_abi = [
         {
@@ -46,8 +48,8 @@ def interact_with_proxy_contract(private_key, salt, signature, token="ETH"):
     transaction = {
         'to': proxy_contract_address,
         'value': 0,
-        'gas': 2000000,
-        'gasPrice': web3.to_wei('1', 'gwei'),
+        'gas': config.gas_limit,
+        'gasPrice': config.gas_price,
         'nonce': web3.eth.get_transaction_count(account.address),
         'data': func_data
     }

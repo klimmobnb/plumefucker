@@ -1,5 +1,6 @@
 from web3 import Web3
 import time
+import config
 
 # Информация о контракте свапа и параметрах
 SWAP_CONTRACT_ADDRESS = '0x4c722A53Cf9EB5373c655E1dD2dA95AcC10152D1'
@@ -83,7 +84,7 @@ MIN_OUT = 9690103065591420100  # Примерное минимальное ко�
 RESERVE_FLAGS = 0
 
 def swap_tokens(private_key):
-    web3 = Web3(Web3.HTTPProvider('https://testnet-rpc.plumenetwork.xyz/http'))
+    web3 = config.web3
     account = web3.eth.account.from_key(private_key)
     
     proxy_contract = web3.eth.contract(address=PROXY_CONTRACT_ADDRESS, abi=PROXY_ABI)
@@ -94,8 +95,8 @@ def swap_tokens(private_key):
         nonce = web3.eth.get_transaction_count(account.address)
         approve_tx = token_contract.functions.approve(spender_address, amount).build_transaction({
             'chainId': 161221135,
-            'gas': 500000,
-            'gasPrice': web3.to_wei('5', 'gwei'),
+            'gas': config.gas_limit,
+            'gasPrice': config.gas_price,
             'nonce': nonce
         })
         signed_approve_tx = web3.eth.account.sign_transaction(approve_tx, private_key)
@@ -113,8 +114,8 @@ def swap_tokens(private_key):
     tx = swap_contract.functions.swap(BASE, QUOTE, POOL_IDX, IS_BUY, IN_BASE_QTY, QTY, TIP, LIMIT_PRICE, MIN_OUT, RESERVE_FLAGS).build_transaction({
         'from': account.address,
         'nonce': nonce,
-        'gas': 500000,
-        'gasPrice': web3.to_wei('5', 'gwei')
+        'gas': config.gas_limit,
+        'gasPrice': config.gas_price
     })
     signed_tx = web3.eth.account.sign_transaction(tx, private_key)
     tx_hash = web3.eth.send_raw_transaction(signed_tx.raw_transaction)

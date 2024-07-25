@@ -5,9 +5,22 @@ from modules.swap_interaction import swap_tokens
 from modules.stake_interaction import stake_tokens
 from modules.check_in_interaction import check_in
 from modules.prediction_interaction import predict_price_movement
+from modules.rwa_interaction import create_rwa_token
+from config import STRICT_ORDER_MODULES, RANDOM_ORDER_MODULES
 import time
 import random
 import config
+
+time.sleep(random.randint(config.module_delay_min, config.module_delay_max))
+def execute_module(keys_and_proxies, module_function, include_proxy=False):
+    for key_and_proxy in keys_and_proxies:
+        private_key = key_and_proxy[0]
+        wallet_address = get_wallet_address(private_key)
+        if include_proxy:
+            module_function(private_key, wallet_address, key_and_proxy)
+        else:
+            module_function(private_key, wallet_address)
+        time.sleep(random.randint(config.wallet_delay_min, config.wallet_delay_max))
 
 def run_faucet_module(private_key, wallet_address, key_and_proxy):
     salt, signature = request_faucet(wallet_address, key_and_proxy, token="ETH")
@@ -65,6 +78,15 @@ def run_prediction_module(private_key, wallet_address):
         else:
             print(f"Prediction: No receipt returned for transaction.")
 
+def run_rwa_module(private_key, wallet_address):
+    receipt = create_rwa_token(private_key)
+    print(f"Wallet: {wallet_address}")
+    if receipt['status'] == 1:
+        print(f"RWA Token Creation: Transaction successful. Hash: {receipt['transactionHash'].hex()}")
+    else:
+        print(f"RWA Token Creation: Transaction failed. Hash: {receipt['transactionHash'].hex()}")
+
+
 def run_all_modules_for_key(private_key, wallet_address, key_and_proxy):
     run_faucet_module(private_key, wallet_address, key_and_proxy)
     time.sleep(random.randint(config.module_delay_min, config.module_delay_max))
@@ -75,22 +97,39 @@ def run_all_modules_for_key(private_key, wallet_address, key_and_proxy):
     run_check_in_module(private_key, wallet_address)
     time.sleep(random.randint(config.module_delay_min, config.module_delay_max))
     run_prediction_module(private_key, wallet_address)
+    time.sleep(random.randint(config.module_delay_min, config.module_delay_max))
+    run_rwa_module(private_key, wallet_address)
 
-def run_faucet_swap_stake_for_key(private_key, wallet_address, key_and_proxy):
-    run_faucet_module(private_key, wallet_address, key_and_proxy)
-    time.sleep(random.randint(config.module_delay_min, config.module_delay_max))
-    run_swap_module(private_key, wallet_address)
-    time.sleep(random.randint(config.module_delay_min, config.module_delay_max))
-    run_stake_module(private_key, wallet_address)
-    time.sleep(random.randint(config.module_delay_min, config.module_delay_max))
-    run_prediction_module(private_key, wallet_address)
-
-def execute_module(keys_and_proxies, module_function, include_proxy=False):
+def execute_custom_route(keys_and_proxies, include_proxy=False):
     for key_and_proxy in keys_and_proxies:
         private_key = key_and_proxy[0]
         wallet_address = get_wallet_address(private_key)
-        if include_proxy:
-            module_function(private_key, wallet_address, key_and_proxy)
-        else:
-            module_function(private_key, wallet_address)
-        time.sleep(random.randint(config.wallet_delay_min, config.wallet_delay_max))
+        
+        # Выполнение модулей в строгом порядке
+        for module_name, times in STRICT_ORDER_MODULES:
+            for _ in range(times):
+                execute_module_by_name(module_name, private_key, wallet_address, key_and_proxy)
+                time.sleep(random.randint(config.module_delay_min, config.module_delay_max))
+
+        # Выполнение модулей в случайном порядке
+        random.shuffle(RANDOM_ORDER_MODULES)
+        for module_name, times in RANDOM_ORDER_MODULES:
+            for _ in range(times):
+                execute_module_by_name(module_name, private_key, wallet_address, key_and_proxy)
+                time.sleep(random.randint(config.module_delay_min, config.module_delay_max))
+
+        time.sleep(random.randint(config.module_delay_min, config.module_delay_max))
+        
+def execute_module_by_name(module_name, private_key, wallet_address, key_and_proxy):
+    if module_name == "faucet":
+        run_faucet_module(private_key, wallet_address, key_and_proxy)
+    elif module_name == "swap":
+        run_swap_module(private_key, wallet_address)
+    elif module_name == "stake":
+        run_stake_module(private_key, wallet_address)
+    elif module_name == "check_in":
+        run_check_in_module(private_key, wallet_address)
+    elif module_name == "prediction":
+        run_prediction_module(private_key, wallet_address)
+    elif module_name == "rwa":
+        run_rwa_module(private_key, wallet_address)

@@ -1,6 +1,5 @@
-from secrets import token_hex
 from web3 import Web3
-from decimal import Decimal, ROUND_DOWN
+import config
 
 # информация о прокси контракте и контракте реализации
 PROXY_CONTRACT_ADDRESS = '0xA34420e04DE6B34F8680EE87740B379103DC69f6'
@@ -68,7 +67,7 @@ def get_token_balance(web3, token_address, wallet_address):
     return token_contract.functions.balanceOf(wallet_address).call()
 
 def approve_token(private_key, token_address, spender_address, amount):
-    web3 = Web3(Web3.HTTPProvider('https://testnet-rpc.plumenetwork.xyz/http'))
+    web3 = config.web3
     account = web3.eth.account.from_key(private_key)
     
     contract = web3.eth.contract(address=token_address, abi=ERC20_ABI)
@@ -77,8 +76,8 @@ def approve_token(private_key, token_address, spender_address, amount):
     nonce = web3.eth.get_transaction_count(account.address)
     approval_tx = contract.functions.approve(spender_address, amount).build_transaction({
         'chainId': 161221135,
-        'gas': 500000,  # Увеличиваем лимит газа
-        'gasPrice': web3.to_wei('5', 'gwei'),
+        'gas': config.gas_limit,  # Увеличиваем лимит газа
+        'gasPrice': config.gas_price,
         'nonce': nonce
     })
     signed_approval_tx = web3.eth.account.sign_transaction(approval_tx, private_key)
@@ -89,7 +88,7 @@ def approve_token(private_key, token_address, spender_address, amount):
 
 
 def stake_tokens(private_key, token_address):
-    web3 = Web3(Web3.HTTPProvider('https://testnet-rpc.plumenetwork.xyz/http'))
+    web3 = config.web3
 
     proxy_contract = web3.eth.contract(address=PROXY_CONTRACT_ADDRESS, abi=PROXY_ABI)
     implementation_contract = web3.eth.contract(address=IMPLEMENTATION_CONTRACT_ADDRESS, abi=IMPLEMENTATION_ABI)
@@ -114,18 +113,14 @@ def stake_tokens(private_key, token_address):
 
     # Данные для вызова функции stake контракта реализации
     stake_data = implementation_contract.encodeABI(fn_name="stake", args=[rounded_balance])
-    
-    # Установка лимита газа и цены газа
-    gas_limit = 700000
-    gas_price = web3.to_wei('1', 'gwei')
 
     tx = {
         'to': PROXY_CONTRACT_ADDRESS,
         'from': account.address,
         'nonce': web3.eth.get_transaction_count(account.address),
         'data': stake_data,
-        'gas': gas_limit,
-        'gasPrice': gas_price
+        'gas': config.gas_limit,
+        'gasPrice': config.gas_price
     }
     
     signed_tx = web3.eth.account.sign_transaction(tx, private_key)
@@ -134,3 +129,6 @@ def stake_tokens(private_key, token_address):
     receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
     
     return receipt
+
+def new_func():
+    return 700000

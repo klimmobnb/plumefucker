@@ -1,6 +1,5 @@
 import random
 import time
-from web3 import Web3
 import config
 
 PROXY_CONTRACT_ADDRESS = '0x032139f44650481f4d6000c078820B8E734bF253'
@@ -50,9 +49,6 @@ IMPLEMENTATION_ABI = [
     }
 ]
 
-def create_web3_instance(rpc_url):
-    return Web3(Web3.HTTPProvider(rpc_url))
-
 def send_transaction(web3, transaction, private_key):
     try:
         signed_tx = web3.eth.account.sign_transaction(transaction, private_key)
@@ -64,8 +60,7 @@ def send_transaction(web3, transaction, private_key):
         return None
 
 def predict_price_movement(private_key):
-    rpc_url = 'https://testnet-rpc.plumenetwork.xyz/http'
-    web3 = create_web3_instance(rpc_url)
+    web3 = config.web3
     proxy_contract = web3.eth.contract(address=PROXY_CONTRACT_ADDRESS, abi=PROXY_ABI)
     implementation_contract = web3.eth.contract(address=IMPLEMENTATION_CONTRACT_ADDRESS, abi=IMPLEMENTATION_ABI)
     account = web3.eth.account.from_key(private_key)
@@ -81,8 +76,8 @@ def predict_price_movement(private_key):
             'from': account.address,
             'nonce': web3.eth.get_transaction_count(account.address),
             'data': data,
-            'gas': 500000,
-            'gasPrice': web3.to_wei('1', 'gwei')
+            'gas': config.gas_limit,
+            'gasPrice': config.gas_price
         }
         
         receipt = send_transaction(web3, tx, private_key)
