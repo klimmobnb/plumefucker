@@ -4,29 +4,6 @@ import config
 
 # Информация о контракте свапа и параметрах
 SWAP_CONTRACT_ADDRESS = '0x4c722A53Cf9EB5373c655E1dD2dA95AcC10152D1'
-PROXY_CONTRACT_ADDRESS = '0x032139f44650481f4d6000c078820B8E734bF253'
-PROXY_ABI = [
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "implementation",
-                "type": "address"
-            },
-            {
-                "internalType": "bytes",
-                "name": "_data",
-                "type": "bytes"
-            }
-        ],
-        "stateMutability": "payable",
-        "type": "constructor"
-    },
-    {
-        "stateMutability": "payable",
-        "type": "fallback"
-    }
-]
 
 SWAP_ABI = [
     {
@@ -87,7 +64,6 @@ def swap_tokens(private_key):
     web3 = config.web3
     account = web3.eth.account.from_key(private_key)
     
-    proxy_contract = web3.eth.contract(address=PROXY_CONTRACT_ADDRESS, abi=PROXY_ABI)
     swap_contract = web3.eth.contract(address=SWAP_CONTRACT_ADDRESS, abi=SWAP_ABI)
 
     def approve_tokens(private_key, token_address, spender_address, amount):
@@ -103,7 +79,7 @@ def swap_tokens(private_key):
         approve_tx_hash = web3.eth.send_raw_transaction(signed_approve_tx.raw_transaction)
         return web3.eth.wait_for_transaction_receipt(approve_tx_hash)
 
-    approve_receipt = approve_tokens(private_key, BASE, SWAP_CONTRACT_ADDRESS, QTY)
+    approve_receipt = approve_tokens(private_key, QUOTE, SWAP_CONTRACT_ADDRESS, QTY)
     if approve_receipt['status'] != 1:
         print(f"Approval failed. Transaction hash: {approve_receipt['transactionHash'].hex()}")
         return approve_receipt
