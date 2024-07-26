@@ -67,7 +67,7 @@ def predict_price_movement(private_key):
     
     receipts = []
 
-    for pair_index in range(6):  # От 0 до 5
+    for pair_index in range(9):  # От 0 до 9
         is_long = random.choice([True, False])
         data = implementation_contract.encodeABI(fn_name="predictPriceMovement", args=[pair_index, is_long])
         
