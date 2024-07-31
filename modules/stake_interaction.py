@@ -104,6 +104,10 @@ def stake_tokens(private_key, token_address):
     
     # Округляем баланс до ближайшего целого числа токенов
     rounded_balance = int(balance / 10**18) * 10**18
+
+    if rounded_balance == 0:
+        print(f"Insufficient balance to stake after rounding. Balance must be greater than 0.\nWallet: {wallet_address}")
+        return None
     
     # Одобряем контракт для использования токенов
     approval_receipt = approve_token(private_key, token_address, PROXY_CONTRACT_ADDRESS, rounded_balance)

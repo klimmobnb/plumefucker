@@ -1,5 +1,6 @@
 import random
 import string
+import time
 from web3 import Web3
 import config
 
@@ -92,30 +93,37 @@ def generate_random_string(length):
 def create_rwa_token(private_key):
     web3 = config.web3
     account = web3.eth.account.from_key(private_key)
+    
+    last_receipt = None
+    for rwa_type in range(10):
+        name = generate_random_string(random.randint(5, 10))
+        symbol = "ITEM"
+        description = generate_random_string(random.randint(5, 10))
+        image = RWA_IMAGES[rwa_type]
 
-    name = generate_random_string(random.randint(5, 10))
-    symbol = "ITEM"
-    description = generate_random_string(random.randint(5, 10))
-    rwa_type = random.randint(0, 9)
-    image = RWA_IMAGES[rwa_type]
+        implementation_contract = web3.eth.contract(address=IMPLEMENTATION_CONTRACT_ADDRESS, abi=IMPLEMENTATION_ABI)
+        data = implementation_contract.encodeABI(fn_name="createToken", args=[name, symbol, description, rwa_type, image])
 
-    implementation_contract = web3.eth.contract(address=IMPLEMENTATION_CONTRACT_ADDRESS, abi=IMPLEMENTATION_ABI)
-    data = implementation_contract.encodeABI(fn_name="createToken", args=[name, symbol, description, rwa_type, image])
+        proxy_contract = web3.eth.contract(address=PROXY_CONTRACT_ADDRESS, abi=PROXY_ABI)
+        nonce = web3.eth.get_transaction_count(account.address)
 
-    proxy_contract = web3.eth.contract(address=PROXY_CONTRACT_ADDRESS, abi=PROXY_ABI)
-    nonce = web3.eth.get_transaction_count(account.address)
+        transaction = {
+            'to': PROXY_CONTRACT_ADDRESS,
+            'from': account.address,
+            'data': data,
+            'gas': config.gas_limit,
+            'gasPrice': config.gas_price,
+            'nonce': nonce
+        }
 
-    transaction = {
-        'to': PROXY_CONTRACT_ADDRESS,
-        'from': account.address,
-        'data': data,
-        'gas': config.gas_limit,
-        'gasPrice': config.gas_price,
-        'nonce': nonce
-    }
+        signed_tx = web3.eth.account.sign_transaction(transaction, private_key)
+        tx_hash = web3.eth.send_raw_transaction(signed_tx.raw_transaction)
+        receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
+        last_receipt = receipt
 
-    signed_tx = web3.eth.account.sign_transaction(transaction, private_key)
-    tx_hash = web3.eth.send_raw_transaction(signed_tx.raw_transaction)
-    receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
+        print(f"RWA Token type {rwa_type}Creation: Transaction successful. Hash: {receipt['transactionHash'].hex()}")
 
-    return receipt
+        # Добавить задержку между минтами, если необходимо
+        time.sleep(random.randint(config.module_delay_min, config.module_delay_max))
+
+    return last_receipt

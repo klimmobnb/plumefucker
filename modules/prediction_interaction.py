@@ -1,6 +1,7 @@
 import random
 import time
 import config
+import requests
 
 PROXY_CONTRACT_ADDRESS = '0x032139f44650481f4d6000c078820B8E734bF253'
 IMPLEMENTATION_CONTRACT_ADDRESS = '0x1a29c466817408768c2D21708cF9041A971d9A78'
@@ -67,7 +68,18 @@ def predict_price_movement(private_key):
     
     receipts = []
 
-    for pair_index in range(9):  # От 0 до 9
+    for _ in range(config.retry_attempts):
+        try:
+            nonce = web3.eth.get_transaction_count(account.address)
+            break
+        except requests.exceptions.ConnectionError as e:
+            print(f"Connection error: {e}. Retrying in {config.retry_delay} seconds...")
+            time.sleep(config.retry_delay)
+    else:
+        print("Max retries exceeded. Exiting...")
+        return receipts
+
+    for pair_index in range(7):  # От 0 до 7
         is_long = random.choice([True, False])
         data = implementation_contract.encodeABI(fn_name="predictPriceMovement", args=[pair_index, is_long])
         

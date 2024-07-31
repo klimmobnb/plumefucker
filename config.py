@@ -7,15 +7,20 @@ web3 = Web3(Web3.HTTPProvider(RPC))
 
 #настройки газа
 gas_limit = 2000000
-gas_price = web3.to_wei(2, 'gwei')
+gas_price = web3.to_wei(1, 'gwei')
 
 # Задержка между модулями в секундах (минимальная и максимальная)
 module_delay_min = 10
-module_delay_max = 60
+module_delay_max = 120
 
 # Задержка между использованием разных кошельков в секундах (минимальная и максимальная)
 wallet_delay_min = 10
-wallet_delay_max = 60
+wallet_delay_max = 120
+
+# Повторная отправка неудачных транзакций
+retry_attempts = 5
+retry_delay = 10
+
 
 # Настройка маршрута модулей
 # Доступные модули:
@@ -45,7 +50,7 @@ STRICT_ORDER_MODULES = [
 ]
 
 RANDOM_ORDER_MODULES = [
-    #("check_in", 1),
-    #("prediction", 1),
+    ("check_in", 1),
+    ("prediction", 1),
     ("rwa", 1)
 ]
