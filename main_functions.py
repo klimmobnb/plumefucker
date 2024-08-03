@@ -6,7 +6,6 @@ from modules.stake_interaction import stake_tokens
 from modules.check_in_interaction import check_in
 from modules.prediction_interaction import predict_price_movement
 from modules.rwa_interaction import create_rwa_token
-from modules.kuma_interaction import mint_and_transfer_nft
 from modules.solidviolet_interaction import solidviolet_swap
 from config import STRICT_ORDER_MODULES, RANDOM_ORDER_MODULES
 
