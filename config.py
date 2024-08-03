@@ -7,7 +7,7 @@ web3 = Web3(Web3.HTTPProvider(RPC))
 
 #настройки газа
 gas_limit = 2000000
-gas_price = web3.to_wei(1, 'gwei')
+gas_price = web3.to_wei(3, 'gwei')
 
 # Задержка между модулями в секундах (минимальная и максимальная)
 module_delay_min = 10
@@ -41,6 +41,7 @@ retry_delay = 10
 #     ("check_in", 1),     # Запускает модуль регистрации один раз
 #     ("prediction", 1)    # Запускает модуль предсказания один раз
 #     ("rwa", 2)           # Запускает модуль RWA два раза
+#     ("kuma", 1)           # Запускает модуль KUMA два раза
 # ]
 
 STRICT_ORDER_MODULES = [
@@ -50,7 +51,8 @@ STRICT_ORDER_MODULES = [
 ]
 
 RANDOM_ORDER_MODULES = [
-    ("check_in", 1),
+    #("check_in", 1),
     ("prediction", 1),
-    ("rwa", 1)
+    ("rwa", 1),
+    ("solidviolet", 1)
 ]

@@ -6,7 +6,10 @@ from modules.stake_interaction import stake_tokens
 from modules.check_in_interaction import check_in
 from modules.prediction_interaction import predict_price_movement
 from modules.rwa_interaction import create_rwa_token
+from modules.kuma_interaction import mint_and_transfer_nft
+from modules.solidviolet_interaction import solidviolet_swap
 from config import STRICT_ORDER_MODULES, RANDOM_ORDER_MODULES
+
 import time
 import random
 import config
@@ -21,7 +24,11 @@ def execute_module(keys_and_proxies, module_function, include_proxy=False):
             else:
                 module_function(private_key, wallet_address)
         except Exception as e:
-            print(f"Error executing module for wallet {wallet_address}: {e}")
+            error_message = str(e)
+            if "insufficient funds for gas * price + value" in error_message:
+                print(f"Skipping wallet {wallet_address} due to insufficient funds.")
+            else:
+                print(f"Error executing module for wallet {wallet_address}: {e}")
         time.sleep(random.randint(config.wallet_delay_min, config.wallet_delay_max))
 
 def run_faucet_module(private_key, wallet_address, key_and_proxy):
@@ -42,7 +49,11 @@ def run_faucet_module(private_key, wallet_address, key_and_proxy):
         else:
             print(f"GOON Faucet: Transaction failed. Hash: {receipt.transactionHash.hex()}")
     except Exception as e:
-        print(f"Error in faucet module for wallet {wallet_address}: {e}")
+        error_message = str(e)
+        if "insufficient funds for gas * price + value" in error_message:
+            print(f"Skipping wallet {wallet_address} due to insufficient funds.")
+        else:
+            print(f"Error in faucet module for wallet {wallet_address}: {e}")
 
 def run_swap_module(private_key, wallet_address):
     try:
@@ -54,7 +65,11 @@ def run_swap_module(private_key, wallet_address):
             else:
                 print(f"Swap: Transaction failed. Hash: {receipt['transactionHash'].hex()}")
     except Exception as e:
-        print(f"Error in swap module for wallet {wallet_address}: {e}")
+        error_message = str(e)
+        if "insufficient funds for gas * price + value" in error_message:
+            print(f"Skipping wallet {wallet_address} due to insufficient funds.")
+        else:
+            print(f"Error in swap module for wallet {wallet_address}: {e}")
 
 def run_stake_module(private_key, wallet_address):
     try:
@@ -66,7 +81,11 @@ def run_stake_module(private_key, wallet_address):
         else:
             print(f"Staking: Transaction failed. Receipt: {receipt}")
     except Exception as e:
-        print(f"Error in stake module for wallet {wallet_address}: {e}")
+        error_message = str(e)
+        if "insufficient funds for gas * price + value" in error_message:
+            print(f"Skipping wallet {wallet_address} due to insufficient funds.")
+        else:
+            print(f"Error in stake module for wallet {wallet_address}: {e}")
 
 def run_check_in_module(private_key, wallet_address):
     try:
@@ -77,7 +96,11 @@ def run_check_in_module(private_key, wallet_address):
         else:
             print(f"Check-in: Transaction failed. Hash: {receipt['transactionHash'].hex()}")
     except Exception as e:
-        print(f"Error in check-in module for wallet {wallet_address}: {e}")
+        error_message = str(e)
+        if "insufficient funds for gas * price + value" in error_message:
+            print(f"Skipping wallet {wallet_address} due to insufficient funds.")
+        else:
+            print(f"Error in check-in module for wallet {wallet_address}: {e}")
 
 def run_prediction_module(private_key, wallet_address):
     try:
@@ -93,7 +116,11 @@ def run_prediction_module(private_key, wallet_address):
             else:
                 print(f"Prediction: No receipt returned for transaction.")
     except Exception as e:
-        print(f"Error in prediction module for wallet {wallet_address}: {e}")
+        error_message = str(e)
+        if "insufficient funds for gas * price + value" in error_message:
+            print(f"Skipping wallet {wallet_address} due to insufficient funds.")
+        else:
+            print(f"Error in prediction module for wallet {wallet_address}: {e}")
 
 def run_rwa_module(private_key, wallet_address):
     try:
@@ -104,7 +131,27 @@ def run_rwa_module(private_key, wallet_address):
         else:
             print(f"RWA Token Creation: Transaction failed. Hash: {receipt['transactionHash'].hex()}")
     except Exception as e:
-        print(f"Error in rwa module for wallet {wallet_address}: {e}")
+        error_message = str(e)
+        if "insufficient funds for gas * price + value" in error_message:
+            print(f"Skipping wallet {wallet_address} due to insufficient funds.")
+        else:
+            print(f"Error in rwa module for wallet {wallet_address}: {e}")
+
+def run_solidviolet_module(private_key, wallet_address):
+    try:
+        receipt = solidviolet_swap(private_key, wallet_address)
+        print(f"Wallet: {wallet_address}")
+        if receipt:
+            if receipt['status'] == 1:
+                print(f"SolidViolet: Transaction successful. Hash: {receipt['transactionHash'].hex()}")
+            else:
+                print(f"SolidViolet: Transaction failed. Hash: {receipt['transactionHash'].hex()}")
+    except Exception as e:
+        error_message = str(e)
+        if "insufficient funds for gas * price + value" in error_message:
+            print(f"Skipping wallet {wallet_address} due to insufficient funds.")
+        else:
+            print(f"Error in solidviolet module for wallet {wallet_address}: {e}")
 
 def execute_custom_route(keys_and_proxies, include_proxy=False):
     for key_and_proxy in keys_and_proxies:
@@ -146,5 +193,11 @@ def execute_module_by_name(module_name, private_key, wallet_address, key_and_pro
             run_prediction_module(private_key, wallet_address)
         elif module_name == "rwa":
             run_rwa_module(private_key, wallet_address)
+        elif module_name == "solidviolet":
+            run_solidviolet_module(private_key, wallet_address) 
     except Exception as e:
-        print(f"Error in module {module_name} for wallet {wallet_address}: {e}")
+        error_message = str(e)
+        if "insufficient funds for gas * price + value" in error_message:
+            print(f"Skipping wallet {wallet_address} due to insufficient funds.")
+        else:
+            print(f"Error in module {module_name} for wallet {wallet_address}: {e}")
