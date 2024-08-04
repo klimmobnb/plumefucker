@@ -8,6 +8,8 @@ from modules.prediction_interaction import predict_price_movement
 from modules.rwa_interaction import create_rwa_token
 from modules.kuma_interaction import mint_and_transfer_nft
 from modules.solidviolet_interaction import solidviolet_swap
+from modules.kuma_interaction import mint_and_transfer_nft
+from modules.landshare_interaction import landshare_interaction
 from config import STRICT_ORDER_MODULES, RANDOM_ORDER_MODULES
 
 import time
@@ -153,6 +155,31 @@ def run_solidviolet_module(private_key, wallet_address):
         else:
             print(f"Error in solidviolet module for wallet {wallet_address}: {e}")
 
+def run_kuma_module(private_key, wallet_address):
+    try:
+        mint_and_transfer_nft(private_key, wallet_address)
+        print(f"Wallet: {wallet_address}")
+        print(f"Kuma: Transaction successful for wallet {wallet_address}")
+    except Exception as e:
+        error_message = str(e)
+        if "insufficient funds for gas * price + value" in error_message:
+            print(f"Skipping wallet {wallet_address} due to insufficient funds.")
+        else:
+            print(f"Error in kuma module for wallet {wallet_address}: {e}")
+
+def run_landshare_module(private_key, wallet_address):
+    try:
+        landshare_interaction(private_key, wallet_address)
+        print(f"Wallet: {wallet_address}")
+        print(f"Landshare: Transaction successful for wallet {wallet_address}")
+    except Exception as e:
+        error_message = str(e)
+        if "insufficient funds for gas * price + value" in error_message:
+            print(f"Skipping wallet {wallet_address} due to insufficient funds.")
+        else:
+            print(f"Error in landshare module for wallet {wallet_address}: {e}")
+
+
 def execute_custom_route(keys_and_proxies, include_proxy=False):
     for key_and_proxy in keys_and_proxies:
         private_key = key_and_proxy[0]
@@ -195,6 +222,10 @@ def execute_module_by_name(module_name, private_key, wallet_address, key_and_pro
             run_rwa_module(private_key, wallet_address)
         elif module_name == "solidviolet":
             run_solidviolet_module(private_key, wallet_address) 
+        elif module_name == "kuma":
+            run_kuma_module(private_key, wallet_address)
+        elif module_name == "landshare":
+            run_landshare_module(private_key, wallet_address)
     except Exception as e:
         error_message = str(e)
         if "insufficient funds for gas * price + value" in error_message:

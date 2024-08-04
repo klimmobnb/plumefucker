@@ -29,7 +29,9 @@ def main_menu():
     print("7. Prediction Module")
     print("8. RWA Module")
     print("9. SolidViolet module")
-    print("10. Выйти")
+    print("10. Kuma module")
+    print("11. Landshare module")
+    print("12. Выйти")
     choice = input("Введите номер опции: ")
 
     file_path = 'accounts_data.xlsx'
@@ -58,7 +60,12 @@ def main_menu():
     elif choice == '9':
         mf.execute_module(keys_and_proxies, mf.run_solidviolet_module)
     elif choice == '10':
+        mf.execute_module(keys_and_proxies, mf.run_kuma_module)
+    elif choice == '11':
+        mf.execute_module(keys_and_proxies, mf.run_landshare_module)
+    elif choice == '12':
         print("Выход...")
+        
         
         return
     else:

@@ -10,17 +10,19 @@ gas_limit = 2000000
 gas_price = web3.to_wei(3, 'gwei')
 
 # Задержка между модулями в секундах (минимальная и максимальная)
-module_delay_min = 10
+module_delay_min = 30
 module_delay_max = 120
 
 # Задержка между использованием разных кошельков в секундах (минимальная и максимальная)
-wallet_delay_min = 10
+wallet_delay_min = 30
 wallet_delay_max = 120
 
 # Повторная отправка неудачных транзакций
 retry_attempts = 5
 retry_delay = 10
 
+# Адресс контракта минта Kuma(меняется раз в 2 дня)
+MINT_CONTRACT_ADDRESS = '0x2Ed68c355753CBe32cFbeeca5A3f81FbF6b48324'
 
 # Настройка маршрута модулей
 # Доступные модули:
@@ -42,17 +44,20 @@ retry_delay = 10
 #     ("prediction", 1)    # Запускает модуль предсказания один раз
 #     ("rwa", 2)           # Запускает модуль RWA два раза
 #     ("kuma", 1)           # Запускает модуль KUMA два раза
+#     ("landshare", 1)
 # ]
 
 STRICT_ORDER_MODULES = [
     ("faucet", 1),
     ("swap", 1),
+    ("landshare", 1),
     ("stake", 1)
 ]
 
 RANDOM_ORDER_MODULES = [
-    #("check_in", 1),
+    ("check_in", 1),
     ("prediction", 1),
     ("rwa", 1),
-    ("solidviolet", 1)
+    ("solidviolet", 1),
+    ("kuma", 1)
 ]
